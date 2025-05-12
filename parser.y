@@ -31,7 +31,7 @@ statement:
     | END_DATE STRING
     | ASSET STRING
     | VAR IDENTIFIER ASSIGN simple_expression
-    | VAR IDENTIFIER ASSIGN NUMBER                      // ✅ added line
+    | VAR IDENTIFIER ASSIGN NUMBER                    
     | IF simple_expression THEN action ENDIF
     | FOR IDENTIFIER IN value_list LBRACE for_block RBRACE
     ;
@@ -56,9 +56,9 @@ value_list_tail:
 
 simple_expression:
       function_call comparison_operator NUMBER
-    | function_call comparison_operator IDENTIFIER          // ✅ added
+    | function_call comparison_operator IDENTIFIER        
     | IDENTIFIER comparison_operator NUMBER
-    | IDENTIFIER comparison_operator IDENTIFIER             // ✅ added
+    | IDENTIFIER comparison_operator IDENTIFIER          
     ;
 
 function_call:
