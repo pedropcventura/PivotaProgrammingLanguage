@@ -1,13 +1,21 @@
-PROGRAM       = { STATEMENT } ;
-STATEMENT     = ( VAR_DECL | CONDITIONAL | LOOP | EMIT_STMT ) ;
-VAR_DECL      = "LET", IDENTIFIER, "=", NUMBER, ";" ;
-CONDITIONAL   = "IF", "(", CONDITION, ")", "{", { STATEMENT }, "}" ;
-LOOP          = "LOOP", NUMBER, "TIMES", "{", { STATEMENT }, "}" ;
-EMIT_STMT     = "EMIT", ACTION, NUMBER, ";" ;
-CONDITION     = IDENTIFIER, COMPARISON_OPERATOR, NUMBER ;
+PROGRAM         = { STATEMENT } ;
+
+STATEMENT       = VAR_DECL
+                | CONDITIONAL
+                | LOOP
+                | EMIT_STMT ;
+                
+VAR_DECL        = "LET", IDENTIFIER, "=", EXPR, ";" ;
+CONDITIONAL     = "IF", "(", CONDITION, ")", "{", { STATEMENT }, "}" ;
+LOOP            = "LOOP", EXPR, "TIMES", "{", { STATEMENT }, "}" ;
+EMIT_STMT       = "EMIT", ACTION, EXPR, ";" ;
+CONDITION       = IDENTIFIER, COMPARISON_OPERATOR, EXPR ;
+EXPR            = TERM, { ("+" | "-"), TERM } ;
+TERM            = FACTOR, { ("*" | "/"), FACTOR } ;
+FACTOR          = NUMBER | IDENTIFIER | "(", EXPR, ")" ;
 COMPARISON_OPERATOR = ">" | "<" | "==" ;
-ACTION        = "BUY" | "SELL" ;
-IDENTIFIER    = LETTER, { LETTER | DIGIT | "_" } ;
-NUMBER        = DIGIT, { DIGIT } ;
-LETTER        = "a" | ... | "z" | "A" | ... | "Z" ;
-DIGIT         = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+ACTION              = "BUY" | "SELL" ;
+IDENTIFIER      = LETTER, { LETTER | DIGIT | "_" } ;
+NUMBER          = DIGIT, { DIGIT } ;
+LETTER          = "a" | ... | "z" | "A" | ... | "Z" ;
+DIGIT           = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;

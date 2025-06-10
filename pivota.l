@@ -17,6 +17,10 @@
 ">"             { printf("TOKEN: GT\n"); return GT; }
 "<"             { printf("TOKEN: LT\n"); return LT; }
 "=="            { printf("TOKEN: EQ\n"); return EQ; }
+"+"             { printf("TOKEN: PLUS\n"); return PLUS; }
+"-"             { printf("TOKEN: MINUS\n"); return MINUS; }
+"*"             { printf("TOKEN: TIMES_OP\n"); return TIMES_OP; }
+"/"             { printf("TOKEN: DIVIDE\n"); return DIVIDE; }
 
 [0-9]+          { printf("TOKEN: NUMBER(%s)\n", yytext); yylval.num = atoi(yytext); return NUMBER; }
 

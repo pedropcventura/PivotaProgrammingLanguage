@@ -1,7 +1,23 @@
-LET x = 100;
-IF (x > 50) {
-    EMIT BUY 10;
+LET price = 60 * 2;
+LET volume = 5 + 10;
+LET threshold = 100;
+LET total = price * volume;
+
+IF (total > threshold) {
+    EMIT BUY volume;
 }
-LOOP 2 TIMES {
-    EMIT SELL 1;
+
+LET correction = total - 80;
+
+IF (correction < 50) {
+    EMIT SELL 3;
+}
+
+LOOP 3 TIMES {
+    EMIT BUY 1;
+}
+
+LET i = 0;
+LOOP 2 * 2 TIMES {
+    EMIT SELL i + 1;
 }
