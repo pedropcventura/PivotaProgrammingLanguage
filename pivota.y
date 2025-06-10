@@ -66,7 +66,10 @@ int get_var_value(char* name) {
 program:
     {
         out = fopen("output.v", "w");
-        fprintf(out, "module pivota_strategy(output reg [3:0] order, output reg [3:0] qty);\n");
+        fprintf(out, "module pivota_strategy(output reg [3:0] dummy);\n");
+        fprintf(out, "reg [3:0] order_list [0:255];\n");
+        fprintf(out, "reg [3:0] qty_list [0:255];\n");
+        fprintf(out, "integer i;\n");
     }
     statements
     {
@@ -76,6 +79,7 @@ program:
             fprintf(out, "%s", var_names[i]);
         }
         fprintf(out, ";\ninitial begin\n");
+        fprintf(out, "    i = 0;\n");
 
         // replay variable assignments
         for (int i = 0; i < var_count; ++i) {
@@ -90,8 +94,25 @@ program:
 
         fprintf(out, "end\nendmodule\n");
         fclose(out);
+
+        // === gerar testbench.sv ===
+        FILE *test = fopen("testbench.sv", "w");
+        fprintf(test,
+        "module test;\n"
+        "    wire [3:0] dummy;\n"
+        "    pivota_strategy uut (.dummy(dummy));\n\n"
+        "    initial begin\n"
+        "        #1;\n"
+        "        for (int j = 0; j < uut.i; j = j + 1) begin\n"
+        "            $display(\"Order: %%d Qty: %%d\", uut.order_list[j], uut.qty_list[j]);\n"
+        "        end\n"
+        "        $finish;\n"
+        "    end\n"
+        "endmodule\n");
+        fclose(test);
     }
     ;
+
 
 statements:
       statements statement
@@ -135,16 +156,17 @@ emit_stmt:
     EMIT BUY expr SEMICOLON
     {
         char buf[128];
-        sprintf(buf, "%sorder = 1; qty = %d;", (inside_if || inside_loop) ? "        " : "    ", $3);
+        sprintf(buf, "%sorder_list[i] = 1; qty_list[i] = %d; i = i + 1;", (inside_if || inside_loop) ? "        " : "    ", $3);
         code_lines[code_line_count++] = strdup(buf);
     }
     | EMIT SELL expr SEMICOLON
     {
         char buf[128];
-        sprintf(buf, "%sorder = 2; qty = %d;", (inside_if || inside_loop) ? "        " : "    ", $3);
+        sprintf(buf, "%sorder_list[i] = 2; qty_list[i] = %d; i = i + 1;", (inside_if || inside_loop) ? "        " : "    ", $3);
         code_lines[code_line_count++] = strdup(buf);
     }
     ;
+
 
 condition:
       IDENTIFIER GT expr {

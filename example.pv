@@ -1,23 +1,18 @@
-LET price = 60 * 2;
-LET volume = 5 + 10;
-LET threshold = 100;
+LET price = 100;
+LET volume = 5;
+LET threshold = 450;
 LET total = price * volume;
 
 IF (total > threshold) {
     EMIT BUY volume;
 }
 
-LET correction = total - 80;
+LET correction = total - 300;
 
-IF (correction < 50) {
+IF (correction < 100) {
     EMIT SELL 3;
 }
 
-LOOP 3 TIMES {
+LOOP 2 TIMES {
     EMIT BUY 1;
-}
-
-LET i = 0;
-LOOP 2 * 2 TIMES {
-    EMIT SELL i + 1;
 }
