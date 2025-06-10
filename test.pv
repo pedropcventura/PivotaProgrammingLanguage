@@ -1,7 +1,10 @@
 LET x = 100;
+LET y = 5000;
+
 IF (x > 50) {
     EMIT BUY 10;
 }
-LOOP 2 TIMES {
+
+LOOP 3 TIMES {
     EMIT SELL 1;
 }
