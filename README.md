@@ -1,66 +1,88 @@
 # Pivota Programming Language (PPL)
 
-Pivota é uma linguagem de programação minimalista criada como parte de um projeto acadêmico de lógica da computação. Ela foi projetada com o objetivo de **traduzir estratégias simples de negociação para hardware**, gerando automaticamente código Verilog a partir de instruções de alto nível.
+Pivota é uma linguagem de programação minimalista desenvolvida para transformar estratégias de negociação em hardware de baixa latência. Com PPL, você escreve regras de trading de forma imperativa e clara, e o compilador gera automaticamente módulos Verilog prontos para simulação e síntese.
 
-Inspirada pelo universo de **high-frequency trading (HFT)** e pela ideia de trazer **decisões de mercado para o domínio físico (circuitos digitais)**, PPL permite descrever lógica de execução de ordens como `BUY` ou `SELL` de forma imperativa e legível.
+Originada em um contexto de high-frequency trading (HFT), PPL permite expressar lógica de ordens (`BUY` e `SELL`) diretamente em circuitos digitais, reduzindo a latência ao mínimo. Seu design enfatiza:
 
-O compilador da linguagem PPL lê arquivos `.pv` com instruções da linguagem e gera um módulo Verilog (`output.v`) que representa esse comportamento. A linguagem inclui:
+- **Variáveis inteiras** (`LET`) para armazenar sinais e parâmetros de estratégia.
+- **Condicionais** (`IF`) para decisões baseadas em comparações.
+- **Laços** (`LOOP N TIMES`) para padrões repetitivos de ordens.
+- **Emissão de ordens** (`EMIT BUY 10`, `EMIT SELL x`) para gerar sinais de execução.
 
-- Declaração de variáveis (`LET`)
-- Condicionais (`IF`)
-- Laços (`LOOP N TIMES`)
-- Emissão de ordens (`EMIT BUY 10`)
+O compilador lê arquivos `.pv` e produz dois artefatos:
 
-O objetivo de longo prazo seria transformar PPL em uma **linguagem DSL real para estratégias financeiras em hardware reconfigurável**.
+1. **`output.v`**: um módulo Verilog com esta assinatura: de "order" e "qty"
+2. um testbench que imprime no console 
 
-## Requisitos
 
-- **Flex**
-- **Bison**
-- **GCC ou Clang**
-<br>
-<br>
 
-Instale no macOS:
+## Executando o Compilador
 
-```bash
-brew install flex bison
-```
+### Instalação de Dependências
 
-Instale no Ubuntu:
-```bash
-sudo apt install flex bison gcc
-```
+**Flex e Bison**
+- macOS:
+  ```bash
+  brew install flex bison
+  ```
+- Ubuntu/Debian:
+  ```bash
+  sudo apt update
+  sudo apt install flex bison gcc
+  ```
 
-## Como Compilar:
+**Icarus Verilog**
+- macOS:
+  ```bash
+  brew install icarus-verilog
+  ```
+- Ubuntu/Debian:
+  ```bash
+  sudo apt install iverilog
+  ```
+
+### Compilando o Compilador
 ```bash
 bison -d pivota.y
 flex pivota.l
 g++ -o compiler lex.yy.c pivota.tab.c -ll
 ```
 
-## Como usar:
+### Gerando Verilog e Testbench
+1. Escreva seu programa em `example.pv`.
+2. Execute:
+   ```bash
+   ./compiler < example.pv
+   ```
+   Isso criará `output.v` e `testbench.sv`.
+
+### Simulando com Icarus Verilog
 ```bash
-./compiler < example.pv
+iverilog -g2012 -o sim output.v testbench.sv
+vvp sim
 ```
+
+
+
 
 ## Exemplo
 
-1. Escreva um código em um arquivo `.pv` seguindo a EBNF da linguagem Pivota:
+# Exemplo de Uso de PPL
 
+### Arquivo de Entrada (`example.pv`)
 ```pivota
-LET price = 60 * 2;
-LET volume = 5 + 10;
-LET threshold = 100;
-LET total = price * volume;
+LET price      = 60 * 2;
+LET volume     = 5 + 10;
+LET threshold  = 100;
+LET total      = price * volume;
 
 IF (total > threshold) {
     EMIT BUY volume;
 }
 
-LET correction = total - 80;
+LET correction = total - 800;
 
-IF (correction < 50) {
+IF (correction < 150) {
     EMIT SELL 3;
 }
 
@@ -68,94 +90,71 @@ LOOP 3 TIMES {
     EMIT BUY 1;
 }
 
-LET i = 0;
-LOOP 2 * 2 TIMES {
-    EMIT SELL i + 1;
+LET reps       = 2 * 2;
+LOOP reps TIMES {
+    EMIT SELL price / 30;
+}
+
+LET sum        = price + volume;
+LET diff       = sum - 20;
+
+IF (diff == 115) {
+    EMIT BUY diff;
 }
 ```
 
-2. Compile com o comando:
-```bash
-make run
-```
-
-3. Veja o código Verilog gerado no arquivo `output.v`:
-
+### Código Verilog Gerado (`output.v`)
 ```verilog
-module pivota_strategy(output reg [3:0] order, output reg [3:0] qty);
-reg [31:0] price, volume, threshold, total, correction, i;
+module pivota_strategy(output reg [3:0] dummy);
+reg [3:0] order_list [0:255];
+reg [3:0] qty_list [0:255];
+integer i;
+reg [31:0] price, volume, threshold, total, correction, reps, sum, diff;
 initial begin
+    i = 0;
     price = 120;
     volume = 15;
     threshold = 100;
     total = 1800;
-    correction = 1720;
-    i = 0;
+    correction = 1000;
+    reps = 4;
+    sum = 135;
+    diff = 115;
     if (1800 > 100) begin
-        order = 1; qty = 15;
+        order_list[i] = 1; qty_list[i] = 15; i = i + 1;
     end
-    if (1720 < 50) begin
-        order = 2; qty = 3;
+    if (1000 < 150) begin
+        order_list[i] = 2; qty_list[i] = 3; i = i + 1;
     end
     repeat(3) begin
-        order = 1; qty = 1;
+        order_list[i] = 1; qty_list[i] = 1; i = i + 1;
     end
     repeat(4) begin
-        order = 2; qty = 1;
+        order_list[i] = 2; qty_list[i] = 4; i = i + 1;
+    end
+    if (115 == 115) begin
+        order_list[i] = 1; qty_list[i] = 115; i = i + 1;
     end
 end
 endmodule
 ```
 
----
+### Resultado da Simulação
+```bash
+$ iverilog -g2012 -o sim output.v testbench.sv
+$ vvp sim
+Order:  1 Qty: 15
+Order:  2 Qty:  3
+Order:  1 Qty:  1
+Order:  1 Qty:  1
+Order:  2 Qty:  4
+Order:  2 Qty:  4
+Order:  2 Qty:  4
+Order:  2 Qty:  4
+Order:  1 Qty: 115
+```  
+Cada linha mostra a **ordem** (1 = BUY, 2 = SELL) e a **quantidade** correspondente, na sequência em que foram enfileiradas no bloco `initial` pela lógica do compilador.
 
-## Funcionalidades Implementadas
-
-A linguagem **Pivota** foi desenvolvida como uma linguagem de domínio específico (DSL) para facilitar a descrição de estratégias de negociação e geração automática de código Verilog. A seguir, estão listadas as principais funcionalidades implementadas:
-
-### Núcleo da Linguagem
-
-- **Variáveis inteiras (`LET`)**
-  - Suporte à declaração e inicialização de variáveis inteiras.
-  - Armazenamento em uma tabela de símbolos com resolução automática de nomes.
-
-- **Atribuições com expressões aritméticas**
-  - Suporte completo aos operadores `+`, `-`, `*`, `/`.
-  - Permite combinações entre literais e variáveis.
-  - Exemplo:  
-    ```pivota
-    LET total = price * volume + 10;
-    ```
-
-### Expressões e Condições
-
-- Comparações lógicas suportadas: `>`, `<`, `==`.
-- Avaliação de condições com substituição dos valores das variáveis.
-- Geração de código `if (...) begin ... end` com condições resolvidas em tempo de compilação.
-
-### Controle de Fluxo
-
-- **Condicionais (`IF`)**
-  - Suporte a blocos com múltiplas instruções entre chaves.
-- **Laços (`LOOP N TIMES`)**
-  - Repetição de blocos de código por um número fixo de vezes, inclusive com expressões aritméticas.
-
-### Comandos de Emissão
-
-- **`EMIT BUY <valor>`** e **`EMIT SELL <valor>`** geram diretamente as instruções:
-  ```verilog
-  order = 1; qty = <valor>; // BUY
-  order = 2; qty = <valor>; // SELL
-  ```
-
-### Geração de Código Verilog
-
-- Todas as variáveis são resolvidas com seus respectivos valores em tempo de compilação.
-- Expressões e condições são totalmente avaliadas e traduzidas.
-- O código gerado é compatível com simuladores Verilog online e ferramentas de síntese.
----
-<br>
-<br>
 
 - Observação: O Makefile foi feito para macOS
     - "make" compila
